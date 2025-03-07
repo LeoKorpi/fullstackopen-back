@@ -56,6 +56,7 @@ app.delete("/api/persons/:id", (request, response) => {
 app.post("/api/persons", (request, response) => {
   const body = request.body;
   const id = Math.floor(Math.random() * 100000);
+  const exists = phonebookEntries.some((person) => person.name === body.name);
 
   if (!body.name) {
     return response.status(400).json({
@@ -66,6 +67,12 @@ app.post("/api/persons", (request, response) => {
   if (!body.number) {
     return response.status(400).json({
       error: "number is missing",
+    });
+  }
+
+  if (exists) {
+    return response.status(409).json({
+      error: "name must be unique",
     });
   }
 

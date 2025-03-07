@@ -1,6 +1,8 @@
 const express = require("express");
 const app = express();
 
+app.use(express.json());
+
 let phonebookEntries = [
   {
     id: "1",
@@ -49,6 +51,33 @@ app.delete("/api/persons/:id", (request, response) => {
     phonebookEntries = phonebookEntries.filter((person) => person.id !== id);
     response.status(204).end();
   }
+});
+
+app.post("/api/persons", (request, response) => {
+  const body = request.body;
+  const id = Math.floor(Math.random() * 100000);
+
+  if (!body.name) {
+    return response.status(400).json({
+      error: "name is missing",
+    });
+  }
+
+  if (!body.number) {
+    return response.status(400).json({
+      error: "number is missing",
+    });
+  }
+
+  const person = {
+    name: body.name,
+    number: body.number,
+    id: String(id),
+  };
+
+  phonebookEntries = phonebookEntries.concat(person);
+
+  response.json(person);
 });
 
 app.get("/info", (request, response) => {

@@ -19,7 +19,7 @@
     "dev": "node --watch index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:ui": "rm -rf dist && cd C:/Users/Leoko/Documents/Projects/fullstackopen/part2/phonebook && npm run build && cp -r dist C:/Users/Leoko/Documents/Projects/fullstackopen3",
-    "deplot:full": "npm run build:ui && git add . && got commit -m uibuild && git push"
+    "deploy:full": "npm run build:ui && git add . && got commit -m uibuild && git push"
   },
   "dependencies": {
     "express": "^4.21.2",

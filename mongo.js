@@ -15,9 +15,9 @@ mongoose.set("strictQuery", false);
 mongoose.connect(url);
 
 const personSchema = new mongoose.Schema({
-  id: String,
   name: String,
   number: String,
+  id: String,
 });
 
 const Person = mongoose.model("Person", personSchema);
@@ -32,7 +32,6 @@ if (!name & !number) {
   });
 } else {
   const person = new Person({
-    id: String(Math.floor(Math.random() * 100000)),
     name: name,
     number: number,
   });

@@ -81,13 +81,13 @@ app.post("/api/persons", (request, response, next) => {
 
   if (!body.name) {
     return response.status(400).json({
-      error: "name is missing",
+      error: "Error: name is missing",
     });
   }
 
   if (!body.number) {
     return response.status(400).json({
-      error: "number is missing",
+      error: "Error: number is missing",
     });
   }
 

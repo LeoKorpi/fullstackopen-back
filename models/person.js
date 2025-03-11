@@ -27,7 +27,7 @@ const personSchema = new mongoose.Schema({
         return /^\d{2,3}-\d{6,}$/.test(v);
       },
     },
-    required: [true, "A phone number is required"],
+    required: true,
   },
   id: String,
 });

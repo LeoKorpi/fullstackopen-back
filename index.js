@@ -76,12 +76,8 @@ app.delete("/api/persons/:id", (request, response) => {
     .catch((error) => next(error));
 });
 
-app.post("/api/persons", (request, response) => {
+app.post("/api/persons", (request, response, next) => {
   const body = request.body;
-
-  if (body.content === undefined) {
-    return response.status(400).json({ error: "content is missing" });
-  }
 
   if (!body.name) {
     return response.status(400).json({
@@ -100,9 +96,12 @@ app.post("/api/persons", (request, response) => {
     number: body.number,
   });
 
-  person.save().then((savedPerson) => {
-    response.json(savedPerson);
-  });
+  person
+    .save()
+    .then((savedPerson) => {
+      response.json(savedPerson);
+    })
+    .catch((error) => next(error));
 });
 
 app.use(unknownEndpoints);

@@ -9,7 +9,11 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js",
-    "test": "echo \"Error: no tet specified\" && exit 1"
+    "build:ui": "rm -rf dist && cd C:/Users/Leoko/Documents/Projects/fullstackopen/part2/phonebook && npm run build && cp -r dist C:/Users/Leoko/Documents/Projects/fullstackopen3",
+    "deploy:full": "npm run build:ui && git add . && got commit -m uibuild && git push",
+    "lint": "eslint .",
+    "lint-fix": "eslint . --fix",
+    "test": "node --test"
   },
   "dependencies": {
     "cors": "^2.8.5",

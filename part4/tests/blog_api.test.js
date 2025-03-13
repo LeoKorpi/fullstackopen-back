@@ -84,6 +84,35 @@ test("if likes property is missing, it defaults to 0", async () => {
   assert.strictEqual(response.body.likes, 0, "Expected default likes to be 0");
 });
 
+test("if title is missing, backend should respond with code 400", async () => {
+  const newBlog = {
+    author: "The person who forgets title and url to their",
+    url: "www.notitle.com",
+    likes: 3,
+    // Title are intentionally left out
+  };
+
+  const response = await api.post("/api/blogs").send(newBlog).expect(400);
+
+  assert.strictEqual(
+    response.body.error,
+    "Blog validation failed: title: Path `title` is required."
+  );
+});
+
+test("if url is missing, backend should respond with code 400", async () => {
+  const newBlog = {
+    title: "Url missing",
+    author: "The person who forgets title and url to their",
+    likes: 6,
+    // Url is intentionally left out
+  };
+
+  const response = await api.post("/api/blogs").send(newBlog).expect(400);
+
+  assert.strictEqual(response.body.error, "Blog validation failed: url: Path `url` is required.");
+});
+
 after(async () => {
   await mongoose.connection.close();
 });

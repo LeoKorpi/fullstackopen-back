@@ -1,6 +1,7 @@
 const { test, after, beforeEach } = require("node:test");
 const assert = require("node:assert");
 const mongoose = require("mongoose");
+const helper = require("./test_helper");
 const supertest = require("supertest");
 const app = require("../app");
 
@@ -8,41 +9,13 @@ const api = supertest(app);
 
 const Blog = require("../models/blog");
 
-const initialBlogs = [
-  {
-    title: "The best blog in the world",
-    author: "Myself",
-    url: "www.bestblog.com",
-    likes: 5,
-    id: "67d1959d3087ebff4e822315",
-  },
-  {
-    title: "I HATE BLOGS!!!",
-    author: "Hater",
-    url: "www.thisblogsux.com",
-    likes: 0,
-    id: "67d2c190c31211d763a7056a",
-  },
-  {
-    title: "The student's kitchen",
-    author: "Elsa Vancleef",
-    url: "www.Easycooking.com",
-    likes: 12,
-    id: "67d2c1e96ef12e170f540475",
-  },
-];
-
 beforeEach(async () => {
   await Blog.deleteMany({});
 
-  let blogObject = new Blog(initialBlogs[0]);
-  await blogObject.save();
-
-  blogObject = new Blog(initialBlogs[1]);
-  await blogObject.save();
-
-  blogObject = new Blog(initialBlogs[2]);
-  await blogObject.save();
+  for (let blog of helper.initialBlogs) {
+    let blogObject = new Blog(blog);
+    await blogObject.save();
+  }
 });
 
 test("blogs are returned as json", async () => {
@@ -52,10 +25,10 @@ test("blogs are returned as json", async () => {
     .expect("Content-Type", /application\/json/);
 });
 
-test("there are three blogs", async () => {
+test("all blogs are returned", async () => {
   const response = await api.get("/api/blogs");
 
-  assert.strictEqual(response.body.length, 3);
+  assert.strictEqual(response.body.length, helper.initialBlogs.length);
 });
 
 test("the frist blog is about cooking as a student", async () => {
@@ -70,6 +43,28 @@ test("the unique identifier is named id, not _id", async () => {
 
   assert("id" in response.body[0], "the blog should have an 'id' property");
   assert(!("_id" in response.body[0]), "the blog should NOT have an '_id' property");
+});
+
+test("a POST request successfully add a new blog to the db", async () => {
+  const newBlog = {
+    title: "Blog title",
+    author: "Name nameson",
+    url: "www.blog.com",
+    likes: 4,
+  };
+
+  await api
+    .post("/api/blogs")
+    .send(newBlog)
+    .expect(201)
+    .expect("Content-Type", /application\/json/);
+
+  const response = await api.get("/api/blogs");
+
+  const contents = response.body.map((r) => r.title);
+
+  assert.strictEqual(response.body.length, helper.initialBlogs.length + 1);
+  assert(contents.includes("Blog title"));
 });
 
 after(async () => {

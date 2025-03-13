@@ -67,6 +67,23 @@ test("a POST request successfully add a new blog to the db", async () => {
   assert(contents.includes("Blog title"));
 });
 
+test("if likes property is missing, it defaults to 0", async () => {
+  const newBlog = {
+    title: "Nobody likes me...",
+    author: "Samuel sad",
+    url: "www.nolikes.com",
+    // likes is intentionally not included
+  };
+
+  const response = await api
+    .post("/api/blogs")
+    .send(newBlog)
+    .expect(201)
+    .expect("Content-Type", /application\/json/);
+
+  assert.strictEqual(response.body.likes, 0, "Expected default likes to be 0");
+});
+
 after(async () => {
   await mongoose.connection.close();
 });

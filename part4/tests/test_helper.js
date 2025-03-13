@@ -9,10 +9,10 @@ const initialBlogs = [
     id: "67d1959d3087ebff4e822315",
   },
   {
-    title: "I HATE BLOGS!!!",
-    author: "Hater",
-    url: "www.thisblogsux.com",
-    likes: 0,
+    title: "The student's kitchen",
+    author: "Elsa Vancleef",
+    url: "www.Easycooking.com",
+    likes: 13,
     id: "67d2c190c31211d763a7056a",
   },
   {

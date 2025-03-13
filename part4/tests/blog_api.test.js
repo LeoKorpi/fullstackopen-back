@@ -65,6 +65,13 @@ test("the frist blog is about cooking as a student", async () => {
   assert(contents.includes("The student's kitchen"));
 });
 
+test("the unique identifier is named id, not _id", async () => {
+  const response = await api.get("/api/blogs");
+
+  assert("id" in response.body[0], "the blog should have an 'id' property");
+  assert(!("_id" in response.body[0]), "the blog should NOT have an '_id' property");
+});
+
 after(async () => {
   await mongoose.connection.close();
 });

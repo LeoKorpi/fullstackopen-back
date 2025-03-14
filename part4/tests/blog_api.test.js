@@ -138,8 +138,6 @@ describe("Updating value of a specific blog", () => {
       likes: blogToUpdate.likes + 1,
     };
 
-    console.log(updatedBlogData, "\n");
-
     const response = await api
       .put(`/api/blogs/${blogToUpdate.id}`)
       .send(updatedBlogData)

@@ -11,9 +11,24 @@ const api = supertest(app);
 const Blog = require("../models/blog");
 const User = require("../models/user");
 
+let token = null;
+
 beforeEach(async () => {
+  await User.deleteMany({});
   await Blog.deleteMany({});
-  await Blog.insertMany(helper.initialBlogs);
+
+  const passwordHash = await bcrypt.hash("testpassword", 10);
+  const user = new User({ username: "testuser", passwordHash });
+  await user.save();
+
+  const loginResponse = await api
+    .post("/api/login")
+    .send({ username: "testuser", password: "testpassword" });
+
+  token = loginResponse.body.token;
+
+  const blogsWithUser = await helper.initialBlogs();
+  await Blog.insertMany(blogsWithUser);
 });
 
 test("blogs are returned as json", async () => {
@@ -25,11 +40,12 @@ test("blogs are returned as json", async () => {
 
 test("all blogs are returned", async () => {
   const response = await api.get("/api/blogs");
+  const blogsWithUser = await helper.initialBlogs();
 
-  assert.strictEqual(response.body.length, helper.initialBlogs.length);
+  assert.strictEqual(response.body.length, blogsWithUser.length);
 });
 
-test("the frist blog is about cooking as a student", async () => {
+test("the first blog is about cooking as a student", async () => {
   const response = await api.get("/api/blogs");
 
   const contents = response.body.map((blog) => blog.title);
@@ -56,15 +72,16 @@ describe("Addition of a new blog", () => {
 
     await api
       .post("/api/blogs")
+      .set("Authorization", `Bearer ${token}`)
       .send(newBlog)
       .expect(201)
       .expect("Content-Type", /application\/json/);
 
     const response = await api.get("/api/blogs");
 
-    const contents = response.body.map((r) => r.title);
-
-    assert.strictEqual(response.body.length, helper.initialBlogs.length + 1);
+    const contents = response.body.map((b) => b.title);
+    const blogsWithUser = await helper.initialBlogs();
+    assert.strictEqual(response.body.length, blogsWithUser.length + 1);
     assert(contents.includes("Blog title"));
   });
 
@@ -73,11 +90,13 @@ describe("Addition of a new blog", () => {
       title: "Nobody likes me...",
       author: "Samuel sad",
       url: "www.nolikes.com",
+      id: "dhwhdwiaudy7wayd87wa",
       // likes is intentionally not included
     };
 
     const response = await api
       .post("/api/blogs")
+      .set("Authorization", `Bearer ${token}`)
       .send(newBlog)
       .expect(201)
       .expect("Content-Type", /application\/json/);
@@ -93,7 +112,11 @@ describe("Addition of a new blog", () => {
       // Title are intentionally left out
     };
 
-    const response = await api.post("/api/blogs").send(newBlog).expect(400);
+    const response = await api
+      .post("/api/blogs")
+      .set("Authorization", `Bearer ${token}`)
+      .send(newBlog)
+      .expect(400);
 
     assert.strictEqual(
       response.body.error,
@@ -109,7 +132,11 @@ describe("Addition of a new blog", () => {
       // Url is intentionally left out
     };
 
-    const response = await api.post("/api/blogs").send(newBlog).expect(400);
+    const response = await api
+      .post("/api/blogs")
+      .set("Authorization", `Bearer ${token}`)
+      .send(newBlog)
+      .expect(400);
 
     assert.strictEqual(response.body.error, "Blog validation failed: url: Path `url` is required.");
   });
@@ -117,14 +144,21 @@ describe("Addition of a new blog", () => {
 
 describe("Deletion of a blog", () => {
   test("succeeds with code 204 if id is valid", async () => {
+    console.log("Token used for DELETE test: ", token);
+
     const blogsAtStart = await helper.blogsInDb();
     const blogToDelete = blogsAtStart[0];
 
-    await api.delete(`/api/blogs/${blogToDelete.id}`).expect(204);
+    console.log("Blog to delete: ", blogToDelete);
+
+    await api
+      .delete(`/api/blogs/${blogToDelete.id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .expect(204);
 
     const blogsAtEnd = await helper.blogsInDb();
-
-    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length - 1);
+    const blogsWithUser = await helper.initialBlogs();
+    assert.strictEqual(blogsAtEnd.length, blogsWithUser.length - 1);
 
     const titles = blogsAtEnd.map((r) => r.title);
     assert(!titles.includes(blogToDelete.title));
@@ -154,15 +188,6 @@ describe("Updating value of a specific blog", () => {
 });
 
 describe("When there is initially one user in db", () => {
-  beforeEach(async () => {
-    await User.deleteMany({});
-
-    const passwordHash = await bcrypt.hash("secret", 10);
-    const user = new User({ username: "root", passwordHash });
-
-    await user.save();
-  });
-
   test("creation succeeds with a fresh username", async () => {
     const usersAtStart = await helper.usersInDb();
 
@@ -174,6 +199,7 @@ describe("When there is initially one user in db", () => {
 
     await api
       .post("/api/users")
+      .set("Authorization", `Bearer ${token}`)
       .send(newUser)
       .expect(201)
       .expect("Content-Type", /application\/json/);
@@ -189,13 +215,14 @@ describe("When there is initially one user in db", () => {
     const usersAtStart = await helper.usersInDb();
 
     const newUser = {
-      username: "root",
-      name: "Superuser",
-      password: "k0rp1k0rp1",
+      username: "testuser",
+      name: "Test user",
+      password: "testpassword",
     };
 
     const result = await api
       .post("/api/users")
+      .set("Authorization", `Bearer ${token}`)
       .send(newUser)
       .expect(400)
       .expect("Content-Type", /application\/json/);

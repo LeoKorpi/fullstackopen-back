@@ -1,4 +1,3 @@
-const jwt = require("jsonwebtoken");
 const blogsRouter = require("express").Router();
 const middleware = require("../utils/middleware");
 const Blog = require("../models/blog");
@@ -34,17 +33,29 @@ blogsRouter.post("/", middleware.userExtractor, async (request, response) => {
   response.status(201).json(savedBlog);
 });
 
-blogsRouter.delete("/:id", middleware.userExtractor, async (request, response) => {
-  const user = request.user;
-  const blog = await Blog.findById(request.params.id);
+blogsRouter.delete("/:id", middleware.userExtractor, async (request, response, next) => {
+  try {
+    const user = request.user;
+    const blog = await Blog.findById(request.params.id);
 
-  if (!blog) return response.status(404).json({ error: "blog not found" });
+    if (!blog) return response.status(404).json({ error: "blog not found" });
 
-  if (blog.user.toString() !== user.id)
-    return response.status(403).json({ error: "not authorized to delete this" });
+    console.log("Blog user: ", blog);
+    console.log("Blog user id: ", blog.user);
+    console.log("Requset user id : ", user.id);
 
-  await Blog.findByIdAndDelete(request.params.id);
-  response.status(204).end();
+    if (blog.user.toString() !== user.id.toString())
+      return response.status(403).json({ error: "not authorized to delete this" });
+
+    console.log("attempting to delete blog with id: ", request.params.id);
+    const deletedBlog = await Blog.findByIdAndDelete(request.params.id);
+    console.log("Deleted blog: ", deletedBlog);
+
+    response.status(204).end();
+  } catch (error) {
+    console.error("DELETE error", error);
+    next(error);
+  }
 });
 
 blogsRouter.put("/:id", async (request, response) => {
